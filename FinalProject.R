@@ -283,18 +283,15 @@ sqldf(Query11)
 ##########
 ##Query12# 
 ##########
-Query12 <- "SELECT c.`Customer.ID`, COUNT(t.`SKU`) AS Number_of_Purchases, 
-            SUM(t.`Total.Price`) AS Total_Spending
-            FROM customer_table c
-            JOIN transaction_table t 
-            ON c.`Customer.ID` = t.`Customer.ID`
-            GROUP BY c.`Customer.ID`
+Query12 <- "SELECT `Customer.ID`, COUNT(SKU) AS Number_of_Purchases, 
+            SUM(`Total.Price`) AS Total_Spending
+            FROM cleaned
+            GROUP BY `Customer.ID`
             HAVING Number_of_Purchases > 1
             ORDER BY Total_Spending DESC
-            LIMIT 10;"
+            ;"
 
 sqldf(Query12)
-
 
 
 ###############################################################
@@ -634,7 +631,25 @@ ggplot(age_group_sales, aes(x = Age.Group, y = Total.Sales, fill = Age.Group)) +
   scale_y_continuous(labels = comma) +
   theme(axis.text.x = element_text(angle = 45, hjust = 1))
 
+###############################################################################
+##Visualization 13; Scatter Plot of total number of purchases and total spending#
+###############################################################################
+# Summarize data to get total number of purchases and total amount spent per customer
+customer_summary <- cleaned %>%
+  group_by(Customer.ID) %>%
+  summarize(TotalPurchases = n(),
+            TotalSpent = sum(Total.Price))
 
-###############################################################################
-##Visualization 13; Scatter Plot ########################
-###############################################################################
+# Scatter plot of Total Purchases vs. Total Spent
+ggplot(customer_summary, aes(x = TotalPurchases, y = TotalSpent)) +
+  geom_point() +
+  geom_smooth(method = "loess", se = FALSE) +
+  labs(title = "Total Purchases vs. Total Spent",
+       x = "Total Number of Purchases",
+       y = "Total Amount Spent") +
+  theme_minimal()
+
+
+#Correlation for conclusion
+cor(cleaned$Age, cleaned$Total.Price)
+
