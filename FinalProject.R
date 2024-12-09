@@ -37,6 +37,27 @@ cleaned$Purchase.Date <- ymd(cleaned$Purchase.Date)
 # Extract month and year from Purchase Date
 cleaned$Month <- floor_date(cleaned$Purchase.Date, "month")
 
+
+###########################################################
+##Cleaning data; combining "PayPal" and "Paypal"###########
+###########################################################
+# Combine the two PayPal columns together
+cleaned$Payment.Method <- gsub("Paypal", "PayPal", cleaned$Payment.Method)
+
+# Verify the changes
+table(cleaned$Payment.Method)
+
+
+###########################################################
+##Cleaning data; combining the three add on types##########
+###########################################################
+# Combine the Add.ons.Purchased column into three groups of add-on types and remove extra spaces
+transaction_table <- transaction_table %>%
+  separate_rows(Add.ons.Purchased, sep = ",") %>%
+  mutate(Add.ons.Purchased = trimws(Add.ons.Purchased)) %>%
+  filter(Add.ons.Purchased != "")
+
+
 ####################################
 ##Separate dataset into two tables##
 ####################################
@@ -162,6 +183,7 @@ sqldf(Query5.1)
 ##Query6## 
 ##########
 # Split the Add.ons.Purchased column into individual add-ons and remove extra spaces
+#Cleaning from above
 transaction_table <- transaction_table %>%
   separate_rows(Add.ons.Purchased, sep = ",") %>%
   mutate(Add.ons.Purchased = trimws(Add.ons.Purchased)) %>%
@@ -426,12 +448,6 @@ ggplot(monthly_total_sales, aes(x = Month, y = Total.Price, group = 1)) +
 #############################################################################
 ##Visualization 5; Create a bar chart of average spending by payment method##
 #############################################################################
-# Combine the two PayPal columns together
-cleaned$Payment.Method <- gsub("Paypal", "PayPal", cleaned$Payment.Method)
-
-# Verify the changes
-table(cleaned$Payment.Method)
-
 # Calculate the average spending amount by payment method
 avg_spending_by_payment <- aggregate(Total.Price ~ Payment.Method, cleaned, mean)
 
@@ -576,7 +592,7 @@ ggplot(pivot_long, aes(x = Month, y = Shipping.Type, fill = Purchase_Count)) +
 
 
 ###############################################################################
-##Visualization 11; Heat map of Shipping Types and Purchase Date ##############
+##Visualization 11; Pie chart distribution of completed and cancelled orders ##
 ###############################################################################
 # Group by order status and count occurrences
 order_status_counts <- transaction_table %>%
@@ -617,3 +633,8 @@ ggplot(age_group_sales, aes(x = Age.Group, y = Total.Sales, fill = Age.Group)) +
        y = "Total Sales") +
   scale_y_continuous(labels = comma) +
   theme(axis.text.x = element_text(angle = 45, hjust = 1))
+
+
+###############################################################################
+##Visualization 13; Scatter Plot ########################
+###############################################################################
