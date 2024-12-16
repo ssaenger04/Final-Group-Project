@@ -554,38 +554,38 @@ ggplot(add_on_counts, aes(x = reorder(Add.ons.Purchased, Purchase_Count), y = Pu
 ###############################################################################
 ##Visualization 10; Heat map of Shipping Types and Purchase Date ##############
 ###############################################################################
-# Extract month and year from the Purchase Date
-transaction_table <- transaction_table %>%
-  mutate(Purchase.Date = ymd(Purchase.Date),
-         Month = month(Purchase.Date, label = TRUE),
-         Year = year(Purchase.Date))
+# Extract year and month from 'Purchase Date'
+visual10 <- cleaned %>%
+  mutate(Year = year(Purchase.Date),
+         Month = month(Purchase.Date, label = TRUE))
 
-# Filter out Jan - Aug of 2023
-transaction_table <- transaction_table %>%
-  filter(!(Year == 2023 & Month %in% c("Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug")))
+# Filter out data for the year 2023
+cleaned_visual10 <- visual10 %>%
+  filter(Year != 2023)
 
-# Create a pivot table to count the number of purchases for each shipping type by month and year
-pivot_table <- transaction_table %>%
-  group_by(Year, Month, Shipping.Type) %>%
+# Create a pivot table to count the number of purchases for each shipping type by month
+pivot_table <- cleaned_visual10 %>%
+  group_by(Shipping.Type, Month) %>%
   summarise(Purchase_Count = n()) %>%
-  spread(Shipping.Type, Purchase_Count, fill = 0)
+  spread(Month, Purchase_Count, fill = 0)
 
-# Convert the pivot table to a long format for plotting
+# Convert the pivot table to long format for ggplot2
 pivot_long <- pivot_table %>%
-  gather(key = "Shipping.Type", value = "Purchase_Count", -Year, -Month)
+  gather(key = "Month", value = "Purchase_Count", -Shipping.Type)
 
-# Create a heat map
+# Ensure the months are in the correct order of Jan 2024 - Sept 2024
+pivot_long$Month <- factor(pivot_long$Month, levels = c("Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep"))
+
+# Create the heat map
 ggplot(pivot_long, aes(x = Month, y = Shipping.Type, fill = Purchase_Count)) +
-  geom_tile() +
-  facet_wrap(~ Year) +
+  geom_tile(color = "white") +
   scale_fill_gradient(low = "white", high = "blue") +
-  ggtitle("Heat Map of Shipping Types by Month and Year") +
-  xlab("Month") +
-  ylab("Shipping Type") +
+  labs(title = "Heatmap of Shipping Types and Purchase Date",
+       x = "Month",
+       y = "Shipping Type",
+       fill = "Purchase Count") +
   theme_minimal() +
   theme(axis.text.x = element_text(angle = 45, hjust = 1))
-
-
 
 
 ###############################################################################
